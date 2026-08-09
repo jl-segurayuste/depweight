@@ -34,3 +34,26 @@ def test_import_candidates_normaliza_guiones():
 
 def test_import_candidates_sin_mapeo_usa_nombre_normalizado():
     assert import_candidates("requests") == ["requests"]
+
+
+def test_import_candidates_mapeo_conocido_ignora_mayusculas():
+    # Bug real encontrado 2026-08-09: requirements.txt/pyproject.toml suelen
+    # declarar el nombre tal como aparece en PyPI ("PyYAML", "Pillow"), pero
+    # el mapa usa claves en minúsculas -- comparar sin normalizar hacía que
+    # NINGUNA de estas entradas mapeadas coincidiera nunca al declararse con
+    # su capitalización real.
+    assert import_candidates("PyYAML") == ["yaml"]
+    assert import_candidates("Pillow") == ["PIL"]
+
+
+def test_import_candidates_sin_mapeo_prueba_tambien_minusculas():
+    # Bug real encontrado 2026-08-09: la inmensa mayoría de paquetes sin
+    # mapeo explícito también importan en minúsculas aunque se declaren
+    # capitalizados ("Django" -> "django") -- sin esto, Django aparecía con
+    # 0 usos pese a estar fuertemente usado, el falso positivo exacto que
+    # esta herramienta existe para evitar.
+    assert import_candidates("Django") == ["Django", "django"]
+
+
+def test_import_candidates_sin_mapeo_ya_en_minusculas_no_duplica():
+    assert import_candidates("requests") == ["requests"]

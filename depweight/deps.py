@@ -78,6 +78,22 @@ def declared_packages(repo_path: Path) -> list[str]:
 
 
 def import_candidates(package: str) -> list[str]:
-    if package in PACKAGE_TO_IMPORT:
-        return PACKAGE_TO_IMPORT[package]
-    return [package.replace("-", "_")]
+    # PACKAGE_TO_IMPORT usa claves en minúsculas, pero los ficheros de
+    # dependencias reales suelen declarar el nombre tal como aparece en PyPI
+    # ("Django", "Pillow", "PyYAML") -- comparar sin normalizar mayúsculas
+    # hacía que ninguna de esas entradas del mapa (¡ni el propio "Pillow"!)
+    # coincidiera nunca, así que se le atribuían 0 usos a dependencias muy
+    # usadas de verdad.
+    key = package.lower()
+    if key in PACKAGE_TO_IMPORT:
+        return PACKAGE_TO_IMPORT[key]
+    # Mismo problema para el resto: la inmensa mayoría de paquetes no
+    # mapeados también importan en minúsculas aunque se declaren capitalizados
+    # ("Django" -> "django", "Requests" -> "requests"). Se prueban ambas
+    # formas -- la literal (por si el import realmente usa mayúsculas, como
+    # "PyQt5") y la normalizada -- en vez de adivinar solo una.
+    default = package.replace("-", "_")
+    lowered = default.lower()
+    if lowered == default:
+        return [default]
+    return [default, lowered]

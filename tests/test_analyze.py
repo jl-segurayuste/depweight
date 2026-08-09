@@ -63,6 +63,26 @@ def test_mapeo_pyyaml_a_yaml_funciona(git_repo):
     assert usage.import_names == ["yaml"]
 
 
+def test_paquete_declarado_capitalizado_no_da_falso_cero_usos(git_repo):
+    # Bug real encontrado 2026-08-09: "Django" (así, capitalizado, como se
+    # escribe habitualmente en requirements.txt) se comparaba tal cual contra
+    # el import real "django" (minúsculas) sin normalizar mayúsculas, así que
+    # una dependencia usada por todo el proyecto aparecía con 0 usos --
+    # justo el falso positivo que esta herramienta existe para evitar.
+    write(git_repo, "requirements.txt", "Django==4.2\n")
+    write(
+        git_repo,
+        "app.py",
+        "import django\ndjango.setup()\ndjango.setup()\ndjango.setup()\ndjango.setup()\n",
+    )
+    commit_all(git_repo)
+    results = analyze_repo(git_repo, threshold=3)
+    usage = next(r for r in results if r.package == "Django")
+    assert usage.usage_count == 4
+    assert usage.narrow is False
+    assert usage.files == ["app.py"]
+
+
 def test_sin_dependencias_declaradas_devuelve_none(git_repo):
     write(git_repo, "app.py", "x = 1\n")
     commit_all(git_repo)
