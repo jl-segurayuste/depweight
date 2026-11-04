@@ -14,6 +14,12 @@ $ depweight analyze .
 Total: 2 dependencia(s) de uso estrecho de 8 analizada(s).
 ```
 
+## Así se ve
+
+![Salida de depweight sobre un proyecto de ejemplo](docs/img/demo.svg)
+
+<sub>Ejecución real sobre una pequeña API con dependencias que apenas se usan (todos los datos son ficticios).</sub>
+
 ## Por qué existe
 
 Un grafo de dependencias te dice *qué* depende de *qué*, pero no *cuánto* de
