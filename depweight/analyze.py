@@ -8,6 +8,25 @@ from pydantic import BaseModel
 from depweight.deps import declared_packages, import_candidates
 from depweight.usage import analyze_file
 
+# Las carga otra dependencia por dentro: no se importan nunca y aun así hacen falta. Antes salían
+# con "0 usos" y quitarlas rompía la aplicación (sin itsdangerous no hay SessionMiddleware, sin
+# python-multipart no hay Form()).
+IMPLIED_BY: dict[str, set[str]] = {
+    "python-multipart": {"fastapi", "starlette"},       # formularios y subidas
+    "itsdangerous": {"fastapi", "starlette", "flask"},   # sesiones firmadas
+    "jinja2": {"fastapi", "starlette", "flask"},         # plantillas
+    "uvicorn": {"fastapi", "starlette"},                 # servidor ASGI
+    "gunicorn": {"flask", "django", "fastapi"},
+    "psycopg2": {"sqlalchemy", "django"},
+    "psycopg2-binary": {"sqlalchemy", "django"},
+    "psycopg": {"sqlalchemy", "django"},
+    "asyncpg": {"sqlalchemy"},
+    "pymysql": {"sqlalchemy"},
+    "aiosqlite": {"sqlalchemy"},
+    "email-validator": {"pydantic"},                     # EmailStr
+    "pyyaml": {"uvicorn"},
+}
+
 
 class DependencyUsage(BaseModel):
     package: str
@@ -15,6 +34,7 @@ class DependencyUsage(BaseModel):
     usage_count: int
     files: list[str]
     narrow: bool
+    implied_by: list[str] = []
 
 
 def _tracked_python_files(repo_path: Path) -> list[Path] | None:
@@ -85,4 +105,11 @@ def analyze_repo(repo_path: Path, *, threshold: int = 3) -> list[DependencyUsage
                 narrow=total <= threshold,
             )
         )
+
+    used = {r.package.lower().replace("_", "-") for r in results if r.usage_count > 0}
+    for r in results:
+        implied = sorted(IMPLIED_BY.get(r.package.lower().replace("_", "-"), set()) & used)
+        if implied:
+            r.implied_by = implied
+            r.narrow = False
     return results

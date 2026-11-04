@@ -14,7 +14,9 @@ def to_console(results: list[DependencyUsage], *, only_narrow: bool = False) -> 
     for r in sorted(shown, key=lambda x: x.usage_count):
         label = "[NARROW]" if r.narrow else "[OK    ]"
         lines.append(f"{label} {r.package} -- {r.usage_count} uso(s) en {len(r.files)} fichero(s)")
-        if r.usage_count == 0:
+        if r.implied_by:
+            lines.append(f"         Hace falta para {', '.join(r.implied_by)} (la carga o la usa por dentro), aunque apenas se importe.")
+        elif r.usage_count == 0:
             lines.append("         Declarada pero no se encontró ningún uso real.")
         elif r.narrow:
             lines.append(f"         Revisa si de verdad necesitas {r.package} entera: {', '.join(r.files[:3])}")

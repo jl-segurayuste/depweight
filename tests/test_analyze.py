@@ -95,3 +95,21 @@ def test_sin_repo_git_devuelve_none_no_falsos_cero_usos(tmp_path):
     write(tmp_path, "requirements.txt", "requests\n")
     write(tmp_path, "app.py", "import requests\nrequests.get('x')\n")
     assert analyze_repo(tmp_path) is None
+
+
+def test_dependencia_que_carga_otra_por_dentro_no_es_narrow(git_repo):
+    """Sin itsdangerous no hay SessionMiddleware: nunca se importa, pero quitarla rompe la app."""
+    write(git_repo, "pyproject.toml",
+          '[project]\nname = "x"\ndependencies = ["fastapi", "itsdangerous", "segno"]\n')
+    write(git_repo, "app.py", "import fastapi\n" + "fastapi.FastAPI()\n" * 5)
+    commit_all(git_repo)
+    by_name = {r.package: r for r in analyze_repo(git_repo)}
+    assert not by_name["itsdangerous"].narrow and by_name["itsdangerous"].implied_by == ["fastapi"]
+    assert by_name["segno"].narrow                    # la tabla no tapa dependencias sin uso de verdad
+
+
+def test_dependencia_implicita_sin_su_framework_sigue_marcandose(git_repo):
+    write(git_repo, "pyproject.toml", '[project]\nname = "x"\ndependencies = ["itsdangerous"]\n')
+    write(git_repo, "app.py", "x = 1\n")
+    commit_all(git_repo)
+    assert analyze_repo(git_repo)[0].narrow
