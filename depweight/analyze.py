@@ -3,6 +3,7 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
+from packaging.utils import canonicalize_name
 from pydantic import BaseModel
 
 from depweight.deps import declared_packages, import_candidates
@@ -106,9 +107,9 @@ def analyze_repo(repo_path: Path, *, threshold: int = 3) -> list[DependencyUsage
             )
         )
 
-    used = {r.package.lower().replace("_", "-") for r in results if r.usage_count > 0}
+    used = {canonicalize_name(r.package) for r in results if r.usage_count > 0}
     for r in results:
-        implied = sorted(IMPLIED_BY.get(r.package.lower().replace("_", "-"), set()) & used)
+        implied = sorted(IMPLIED_BY.get(canonicalize_name(r.package), set()) & used)
         if implied:
             r.implied_by = implied
             r.narrow = False

@@ -57,3 +57,14 @@ def test_import_candidates_sin_mapeo_prueba_tambien_minusculas():
 
 def test_import_candidates_sin_mapeo_ya_en_minusculas_no_duplica():
     assert import_candidates("requests") == ["requests"]
+
+
+def test_import_candidates_nombre_normalizado_como_pypi():
+    from depweight.deps import import_candidates
+
+    assert import_candidates("python_dateutil") == ["dateutil"]
+    assert import_candidates("Python.Dateutil") == ["dateutil"]
+    assert import_candidates("psycopg2-binary") == ["psycopg2"]
+    assert import_candidates("opencv-python-headless") == ["cv2"]
+    assert import_candidates("ruamel.yaml") == ["ruamel.yaml"]
+    assert import_candidates("zope.interface") == ["zope.interface"]

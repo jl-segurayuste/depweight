@@ -4,6 +4,7 @@ import tomllib
 from pathlib import Path
 
 from packaging.requirements import InvalidRequirement, Requirement
+from packaging.utils import canonicalize_name
 
 # Nombre de paquete en PyPI -> nombre(s) de import mas probable(s), para los
 # casos donde no coinciden simplemente normalizando guiones/mayusculas.
@@ -25,6 +26,33 @@ PACKAGE_TO_IMPORT: dict[str, list[str]] = {
     "markdown-it-py": ["markdown_it"],
     "protobuf": ["google.protobuf"],
     "grpcio": ["grpc"],
+    "psycopg2-binary": ["psycopg2"],
+    "psycopg-binary": ["psycopg"],
+    "opencv-python-headless": ["cv2"],
+    "opencv-contrib-python": ["cv2"],
+    "opencv-contrib-python-headless": ["cv2"],
+    "mysqlclient": ["MySQLdb"],
+    "pyzmq": ["zmq"],
+    "websocket-client": ["websocket"],
+    "pygobject": ["gi"],
+    "msgpack-python": ["msgpack"],
+    "pymupdf": ["fitz", "pymupdf"],
+    "scikit-image": ["skimage"],
+    "discord-py": ["discord"],
+    "pywin32": ["win32api", "win32con", "win32com", "pythoncom", "pywintypes"],
+    "pycryptodomex": ["Cryptodome"],
+    "python-jose": ["jose"],
+    "python-magic": ["magic"],
+    "python-ldap": ["ldap"],
+    "dnspython": ["dns"],
+    "pyinstaller": ["PyInstaller"],
+    "python-multipart": ["multipart", "python_multipart"],
+    "attrs": ["attr", "attrs"],
+    "ruamel-yaml": ["ruamel.yaml"],
+    "google-cloud-storage": ["google.cloud.storage"],
+    "beautifulsoup": ["BeautifulSoup"],
+    "pyserial-asyncio": ["serial_asyncio"],
+    "paho-mqtt": ["paho.mqtt"],
 }
 
 
@@ -84,7 +112,8 @@ def import_candidates(package: str) -> list[str]:
     # hacía que ninguna de esas entradas del mapa (¡ni el propio "Pillow"!)
     # coincidiera nunca, así que se le atribuían 0 usos a dependencias muy
     # usadas de verdad.
-    key = package.lower()
+    # Normalizado como PyPI (PEP 503): «python_dateutil» o «Python.Dateutil» son «python-dateutil».
+    key = canonicalize_name(package)
     if key in PACKAGE_TO_IMPORT:
         return PACKAGE_TO_IMPORT[key]
     # Mismo problema para el resto: la inmensa mayoría de paquetes no

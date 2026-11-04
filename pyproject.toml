@@ -1,6 +1,6 @@
 [project]
 name = "depweight"
-version = "0.1.2"
+version = "0.1.3"
 description = "No solo el grafo de dependencias: cuanto se usa realmente cada una, para saber si de verdad la necesitas entera."
 readme = "README.md"
 license = { text = "MIT" }
